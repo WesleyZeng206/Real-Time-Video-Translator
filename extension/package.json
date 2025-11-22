@@ -1,0 +1,23 @@
+{
+  "name": "youtube-ai-translator",
+  "version": "1.0.0",
+  "description": "AI-powered YouTube video translator Chrome extension",
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.251",
+    "@types/react": "^18.2.38",
+    "@types/react-dom": "^18.2.17",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.3.2",
+    "vite": "^5.0.4",
+    "vite-plugin-static-copy": "^1.0.0"
+  }
+}

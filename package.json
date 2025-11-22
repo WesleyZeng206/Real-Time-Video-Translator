@@ -1,0 +1,15 @@
+{
+  "name": "youtube-ai-translator",
+  "version": "1.0.0",
+  "description": "AI-powered YouTube video translator Chrome extension",
+  "scripts": {
+    "install:all": "cd backend && pip install -r requirements.txt && cd ../extension && npm install",
+    "dev:backend": "cd backend && python app.py",
+    "dev:extension": "cd extension && npm run dev",
+    "build:extension": "cd extension && npm run build",
+    "setup": "echo 'Please run: npm run install:all' && echo 'Then configure backend/.env with your OpenAI API key'"
+  },
+  "keywords": ["chrome-extension", "youtube", "translation", "ai", "openai"],
+  "author": "",
+  "license": "MIT"
+}
