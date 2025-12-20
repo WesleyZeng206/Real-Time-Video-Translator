@@ -12,8 +12,26 @@ app = Flask(__name__)
 CORS(app)
 
 youtube_service = YouTubeService()
-transcription_service = TranscriptionService(api_key=os.getenv('OPENAI_API_KEY'))
-translation_service = TranslationService(api_key=os.getenv('OPENAI_API_KEY'))
+default_api_key = os.getenv('OPENAI_API_KEY')
+transcription_service = TranscriptionService(api_key=default_api_key) if default_api_key else None
+translation_service = TranslationService(api_key=default_api_key) if default_api_key else None
+
+
+def get_ai_services(request_api_key=None):
+    """
+    Resolve which OpenAI credentials to use. Prefer the key supplied with the request,
+    otherwise fall back to the server's OPENAI_API_KEY.
+    """
+    if request_api_key:
+        return (
+            TranscriptionService(api_key=request_api_key),
+            TranslationService(api_key=request_api_key)
+        )
+
+    if not transcription_service or not translation_service:
+        raise ValueError('OpenAI API key is not configured. Provide one in the request or set OPENAI_API_KEY.')
+
+    return transcription_service, translation_service
 
 
 @app.route('/health', methods=['GET'])
@@ -29,6 +47,7 @@ def process_video():
         target_languages = data.get('target_languages', ['es'])
         start_time = data.get('start_time')
         end_time = data.get('end_time')
+        request_api_key = data.get('api_key')
 
         if not video_url:
             return jsonify({'error': 'video_url is required'}), 400
@@ -36,16 +55,21 @@ def process_video():
         if not isinstance(target_languages, list):
             target_languages = [target_languages]
 
+        try:
+            transcription_client, translation_client = get_ai_services(request_api_key)
+        except ValueError as key_error:
+            return jsonify({'error': str(key_error)}), 400
+
         print(f"Extracting audio from: {video_url}")
         audio_file = youtube_service.download_audio(video_url, start_time, end_time)
 
         print(f"Transcribing audio...")
-        transcription = transcription_service.transcribe(audio_file)
+        transcription = transcription_client.transcribe(audio_file)
 
         translations = {}
         for lang in target_languages:
             print(f"Translating to {lang}...")
-            translation = translation_service.translate(
+            translation = translation_client.translate(
                 transcription['segments'],
                 lang
             )
