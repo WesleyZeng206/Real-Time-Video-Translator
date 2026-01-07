@@ -5,3 +5,4 @@ yt-dlp==2023.11.16
 python-dotenv==1.0.0
 gunicorn==21.2.0
 requests==2.31.0
+dask==2024.1.1

@@ -1,24 +1,11 @@
-# Python
 __pycache__/
 *.py[cod]
 venv/
 env/
 .env
-
-# Node
 node_modules/
-
-# Build outputs
 extension/dist/
 extension/build/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Logs
 *.log
+potential.md
