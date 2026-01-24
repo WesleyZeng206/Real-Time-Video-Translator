@@ -53,10 +53,17 @@ const SidePanel: React.FC = () => {
   const parseTimeToSeconds = (timeStr: string): number | undefined => {
     if (!timeStr) return undefined;
     const parts = timeStr.split(':').reverse();
+
+    const values = parts.map((part) => parseInt(part, 10));
+
+    if (values.some((value) => Number.isNaN(value))) {
+      return undefined;
+    }
+
     let seconds = 0;
-    if (parts[0]) seconds += parseInt(parts[0]);
-    if (parts[1]) seconds += parseInt(parts[1]) * 60;
-    if (parts[2]) seconds += parseInt(parts[2]) * 3600;
+    if (values[0] !== undefined) seconds += values[0];
+    if (values[1] !== undefined) seconds += values[1] * 60;
+    if (values[2] !== undefined) seconds += values[2] * 3600;
     return seconds;
   };
 
@@ -81,11 +88,20 @@ const SidePanel: React.FC = () => {
         throw new Error('Please select at least one target language');
       }
 
+      const rangeStart = useTimeRange ? parseTimeToSeconds(startTime) : undefined;
+
+      const rangeEnd = useTimeRange ? parseTimeToSeconds(endTime) : undefined;
+
       const cachedTranslations: {[lang: string]: TranscriptionSegment[]} = {};
       const languagesToProcess: string[] = [];
 
       for (const lang of settings.selectedLanguages) {
-        const cached = await cacheManager.getCachedTranslation(videoUrl, lang);
+        const cached = await cacheManager.getCachedTranslation(
+          videoUrl,
+          lang,
+          rangeStart,
+          rangeEnd
+        );
         if (cached) {
           cachedTranslations[lang] = cached.translation;
         } else {
@@ -107,10 +123,8 @@ const SidePanel: React.FC = () => {
       };
 
       if (useTimeRange) {
-        const start = parseTimeToSeconds(startTime);
-        const end = parseTimeToSeconds(endTime);
-        if (start !== undefined) options.startTime = start;
-        if (end !== undefined) options.endTime = end;
+        if (rangeStart !== undefined) options.startTime = rangeStart;
+        if (rangeEnd !== undefined) options.endTime = rangeEnd;
       }
 
       const response = await chrome.runtime.sendMessage({
@@ -132,7 +146,9 @@ const SidePanel: React.FC = () => {
             videoUrl,
             lang,
             response.original,
-            response.translations[lang]
+            response.translations[lang],
+            rangeStart,
+            rangeEnd
           );
         }
 
@@ -194,8 +210,7 @@ const SidePanel: React.FC = () => {
         <button
           className="translate-button"
           onClick={handleTranslate}
-          disabled={loading || !videoUrl}
-        >
+          disabled={loading || !videoUrl}>
           {loading ? 'Processing...' : 'Translate Video'}
         </button>
 
@@ -212,8 +227,7 @@ const SidePanel: React.FC = () => {
             <button
               key={lang}
               className={`language-tab ${activeLanguage === lang ? 'active' : ''}`}
-              onClick={() => setActiveLanguage(lang)}
-            >
+              onClick={() => setActiveLanguage(lang)}>
               {lang.toUpperCase()}
             </button>
           ))}
@@ -246,8 +260,7 @@ const SidePanel: React.FC = () => {
           <div
             key={index}
             ref={index === activeIndex ? activeSegmentRef : null}
-            className={`segment ${index === activeIndex ? 'active' : ''}`}
-          >
+            className={`segment ${index === activeIndex ? 'active' : ''}`}>
             <div className="segment-time">
               {formatTime(segment.start)} - {formatTime(segment.end)}
             </div>

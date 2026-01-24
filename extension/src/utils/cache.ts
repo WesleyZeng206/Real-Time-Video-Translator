@@ -66,13 +66,37 @@ class CacheManager {
     return Math.abs(h).toString(36);
   }
 
+  private formatTimePart(value?: number): string {
+    if (value === undefined || value === null) return 'na';
+    if (Number.isNaN(value) || !Number.isFinite(value)) return 'na';
+    return value.toString();
+  }
+
+  private formatRangeKey(startTime?: number, endTime?: number): string {
+    const startKey = this.formatTimePart(startTime);
+    const endKey = this.formatTimePart(endTime);
+
+    if (startKey === 'na' && endKey === 'na') return 'full';
+
+    return `t${startKey}-${endKey}`;
+  }
+
+  private buildCacheKey(url: string, startTime?: number, endTime?: number): string | null {
+    const id = this.extractVideoId(url);
+    if (!id) return null;
+    const rangeKey = this.formatRangeKey(startTime, endTime);
+    return `${id}_${rangeKey}`;
+  }
+
   async getCachedTranslation(
     url: string,
-    lang: string
+    lang: string,
+    startTime?: number,
+    endTime?: number
   ): Promise<{ original: TranscriptionSegment[]; translation: TranscriptionSegment[] } | null> {
     if (!this.db) await this.init();
 
-    const id = this.extractVideoId(url);
+    const id = this.buildCacheKey(url, startTime, endTime);
     if (!id) return null;
 
     return new Promise((resolve, reject) => {
@@ -105,11 +129,13 @@ class CacheManager {
     url: string,
     lang: string,
     original: TranscriptionSegment[],
-    translation: TranscriptionSegment[]
+    translation: TranscriptionSegment[],
+    startTime?: number,
+    endTime?: number
   ): Promise<void> {
     if (!this.db) await this.init();
 
-    const id = this.extractVideoId(url);
+    const id = this.buildCacheKey(url, startTime, endTime);
     if (!id) return;
 
     return new Promise((resolve, reject) => {

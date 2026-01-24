@@ -22,7 +22,7 @@ class TranslationService:
         combined = '\n'.join(f"{idx}. {t}" for idx, t in enumerate(texts))
 
         resp = self.client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-5",
             messages=[
                 {
                     "role": "system",
@@ -58,7 +58,7 @@ class TranslationService:
 
         return batch_result
 
-    def translate(self, segments, lang):
+    def translate(self, segments, lang, max_workers = 4):
         try:
             lang_name = self.LANGUAGES.get(lang, lang)
             result = []
@@ -69,7 +69,8 @@ class TranslationService:
             max_workers_env = os.getenv('TRANSLATION_BATCH_WORKERS', '').strip()
 
             try:
-                max_workers = int(max_workers_env) if max_workers_env else 4
+                if max_workers_env:
+                    max_workers = int(max_workers_env)
             except ValueError:
                 max_workers = 4
 

@@ -66,6 +66,16 @@ def process_video():
         print(f"Transcribing audio...")
         transcription = transcription_client.transcribe(audio_file)
 
+        if start_time is not None:
+            try:
+                offset = float(start_time)
+            except (TypeError, ValueError):
+                return jsonify({'error': 'start_time must be a number'}), 400
+
+            for segment in transcription.get('segments', []):
+                segment['start'] += offset
+                segment['end'] += offset
+
         translations = {}
         for lang in target_languages:
             print(f"Translating to {lang}...")
